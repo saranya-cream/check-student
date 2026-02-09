@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบรายงานผู้หมดสิทธิ์สอบ (Multi-entry)</title>
+    <title>ระบบรายงานผลการมาเรียน (8 กลุ่มสาระ)</title>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
         :root { --primary: #1a73e8; --success: #188038; --danger: #d93025; --bg: #f8f9fa; }
@@ -24,8 +24,8 @@
 
         .btn-group { display: flex; flex-direction: column; gap: 10px; margin-top: 25px; }
         button { width: 100%; padding: 15px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        .btn-add-next { background: var(--success); color: white; } /* ส่งแล้วกรอกคนต่อไป */
-        .btn-reset { background: #e0e0e0; color: #555; } /* เริ่มใหม่ทั้งหมด */
+        .btn-add-next { background: var(--success); color: white; }
+        .btn-reset { background: #e0e0e0; color: #555; }
         
         #loading { display: none; text-align: center; color: var(--primary); font-weight: bold; margin-top: 10px; }
     </style>
@@ -36,38 +36,38 @@
     <form id="attendanceForm">
         <h2>ระบบบันทึกข้อมูลการมาเรียน</h2>
 
-        <div class="section-title">ข้อมูลครูและรายวิชา (กรอกครั้งเดียว)</div>
-        <div class="grid-2">
-            <div>
-                <label>ชื่อครูผู้สอน</label>
-                <input type="text" id="teacherName" placeholder="ชื่อ-นามสกุล" required>
-            </div>
-            <div>
-                <label>กลุ่มสาระฯ</label>
-                <select id="department">
-                    <option value="คณิตศาสตร์">คณิตศาสตร์</option>
-                    <option value="วิทยาศาสตร์ฯ">วิทยาศาสตร์ฯ</option>
-                    <option value="ภาษาไทย">ภาษาไทย</option>
-                    <option value="ภาษาต่างประเทศ">ภาษาต่างประเทศ</option>
-                </select>
-            </div>
-        </div>
+        <div class="section-title">ข้อมูลครูและรายวิชา</div>
+        <label>ชื่อครูผู้สอน</label>
+        <input type="text" id="teacherName" placeholder="ระบุชื่อ-นามสกุล" required>
+
+        <label>กลุ่มสาระการเรียนรู้</label>
+        <select id="department" required>
+            <option value="" disabled selected>--- เลือกกลุ่มสาระฯ ---</option>
+            <option value="คณิตศาสตร์">คณิตศาสตร์</option>
+            <option value="ภาษาไทย">ภาษาไทย</option>
+            <option value="วิทยาศาสตร์และเทคโนโลยี">วิทยาศาสตร์และเทคโนโลยี</option>
+            <option value="สังคมศึกษา ศาสนา และวัฒนธรรม">สังคมศึกษา ศาสนา และวัฒนธรรม</option>
+            <option value="ภาษาต่างประเทศ">ภาษาต่างประเทศ</option>
+            <option value="การงานอาชีพ">การงานอาชีพ</option>
+            <option value="สุขศึกษาและพลศึกษา">สุขศึกษาและพลศึกษา</option>
+            <option value="ศิลปะ">ศิลปะ</option>
+        </select>
 
         <div class="grid-3">
             <div><label>รหัสวิชา</label><input type="text" id="courseID" required></div>
             <div style="grid-column: span 2;"><label>ชื่อรายวิชา</label><input type="text" id="courseName" required></div>
         </div>
         <label>ชั้น/ห้อง</label>
-        <input type="text" id="classRoom" placeholder="ม.6/1" required>
+        <input type="text" id="classRoom" placeholder="เช่น ม.6/1" required>
 
-        <div class="section-title" style="background: #e6ffed; color: #188038;">ข้อมูลนักเรียน (กรอกรายคน)</div>
+        <div class="section-title" style="background: #e6ffed; color: #188038;">ข้อมูลนักเรียน</div>
         <div class="grid-2">
             <div><label>เลขประจำตัว</label><input type="text" id="studentID" required></div>
             <div><label>ชื่อ-นามสกุลนักเรียน</label><input type="text" id="studentName" required></div>
         </div>
 
         <label>เวลาเรียนทั้งหมด (ชั่วโมง)</label>
-        <input type="number" id="totalTime" value="40" oninput="calculate()">
+        <input type="number" id="totalTime" value="40" oninput="calculate()" required>
 
         <div class="grid-3">
             <div><label>ขาด</label><input type="number" id="absent" value="0" oninput="calculate()"></div>
@@ -77,20 +77,21 @@
 
         <div class="calc-result">
             รวมมาเรียน: <span id="presentText">40</span> ชม. | 
-            คิดเป็น: <span id="percentText">100.00</span>%
+            คิดเป็นร้อยละ: <span id="percentText">100.00</span>%
             <div id="statusNote" style="font-size: 0.85em; margin-top:5px;"></div>
         </div>
 
-        <div id="loading">กำลังบันทึกข้อมูล...</div>
+        <div id="loading">กำลังส่งข้อมูล...</div>
 
         <div class="btn-group">
-            <button type="submit" class="btn-add-next">บันทึกข้อมูลและเพิ่มนักเรียนคนถัดไป ➔</button>
-            <button type="button" class="btn-reset" onclick="resetAll()">เริ่มวิชาใหม่ / ล้างข้อมูลทั้งหมด</button>
+            <button type="submit" class="btn-add-next">บันทึกและเพิ่มนักเรียนคนถัดไป</button>
+            <button type="button" class="btn-reset" onclick="resetAll()">ล้างข้อมูลเพื่อเริ่มวิชาใหม่</button>
         </div>
     </form>
 </div>
 
 <script>
+    // *** สำคัญ: นำ URL ที่ได้จาก Apps Script มาใส่ตรงนี้ ***
     const scriptURL = 'https://script.google.com/macros/s/AKfycbxRJ13bWTXhbr2aWQ3auA86Hwc2xro1X-HKs4bbXQOsKta3R3RSJtcLblVDAK_n8Yq8/exec';
 
     function calculate() {
@@ -109,7 +110,7 @@
         const statusNote = document.getElementById('statusNote');
         if (percentage < 80) {
             pText.className = 'low-percent';
-            statusNote.innerText = '⚠️ หมดสิทธิ์สอบ (ต่ำกว่า 80%)';
+            statusNote.innerText = '⚠️ ต่ำกว่า 80% : หมดสิทธิ์สอบ';
             statusNote.style.color = '#d93025';
         } else {
             pText.className = '';
@@ -141,11 +142,11 @@
             percent: document.getElementById('percentText').innerText
         };
 
+        // ใช้ mode: 'no-cors' เพื่อเลี่ยงปัญหาการบล็อกจาก Browser บางรุ่น
         fetch(scriptURL, { method: 'POST', body: JSON.stringify(data), mode: 'no-cors' })
         .then(() => {
-            alert('บันทึกข้อมูลของ ' + data.studentName + ' เรียบร้อย');
-            
-            // ล้างข้อมูลเฉพาะส่วนนักเรียน เพื่อกรอกคนถัดไป
+            alert('บันทึกข้อมูลสำเร็จ!');
+            // ล้างเฉพาะส่วนข้อมูลนักเรียน
             document.getElementById('studentID').value = '';
             document.getElementById('studentName').value = '';
             document.getElementById('absent').value = '0';
@@ -155,21 +156,20 @@
             
             document.getElementById('loading').style.display = 'none';
             submitBtn.disabled = false;
-            document.getElementById('studentID').focus(); // เลื่อนไปช่องเลขประจำตัวอัตโนมัติ
+            document.getElementById('studentID').focus();
         })
         .catch(err => {
-            alert('เกิดข้อผิดพลาด!');
+            alert('เกิดข้อผิดพลาดในการบันทึก!');
             document.getElementById('loading').style.display = 'none';
             submitBtn.disabled = false;
         });
     });
 
     function resetAll() {
-        if(confirm('คุณต้องการล้างข้อมูลทั้งหมดเพื่อเริ่มวิชาใหม่ใช่หรือไม่?')) {
+        if(confirm('ยืนยันล้างข้อมูลทั้งหมดเพื่อเปลี่ยนวิชาใช่หรือไม่?')) {
             location.reload();
         }
     }
 </script>
-
 </body>
 </html>
