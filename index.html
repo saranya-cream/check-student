@@ -7,8 +7,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
         :root { --primary: #1a73e8; --success: #188038; --danger: #d93025; --bg: #f8f9fa; }
-        body { font-family: 'Sarabun', sans-serif; background-color: var(--bg); margin: 0; padding: 20px; display: flex; justify-content: center; }
-        .container { background: white; width: 100%; max-width: 650px; padding: 30px; border-radius: 15px; box-shadow: 0 8px 30px rgba(0,0,0,0.1); }
+        body { font-family: 'Sarabun', sans-serif; background-color: var(--bg); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .container { background: white; width: 100%; max-width: 650px; padding: 30px; border-radius: 15px; box-shadow: 0 8px 30px rgba(0,0,0,0.1); margin-bottom: 20px; }
         h2 { color: var(--primary); text-align: center; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
         .section-title { background: #e8f0fe; padding: 10px; border-radius: 5px; margin-top: 20px; font-weight: bold; color: var(--primary); }
         
@@ -18,6 +18,9 @@
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
         
+        /* สไตล์พิเศษสำหรับ คำนำหน้า + ชื่อ */
+        .name-group { display: grid; grid-template-columns: 120px 1fr; gap: 10px; }
+
         .calc-result { background: #f1f3f4; padding: 15px; border-radius: 10px; margin-top: 15px; border-left: 5px solid var(--primary); }
         .calc-result span { font-weight: bold; color: var(--primary); }
         .low-percent { color: var(--danger) !important; }
@@ -28,6 +31,12 @@
         .btn-reset { background: #e0e0e0; color: #555; }
         
         #loading { display: none; text-align: center; color: var(--primary); font-weight: bold; margin-top: 10px; }
+
+        /* สไตล์ตารางสรุป */
+        .summary-container { background: white; width: 100%; max-width: 650px; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: none; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+        th, td { border-bottom: 1px solid #eee; padding: 12px 8px; text-align: left; }
+        th { background: #fafafa; color: #666; }
     </style>
 </head>
 <body>
@@ -63,7 +72,21 @@
         <div class="section-title" style="background: #e6ffed; color: #188038;">ข้อมูลนักเรียน</div>
         <div class="grid-2">
             <div><label>เลขประจำตัว</label><input type="text" id="studentID" required></div>
-            <div><label>ชื่อ-นามสกุลนักเรียน</label><input type="text" id="studentName" required></div>
+            <div class="name-group">
+                <div>
+                    <label>คำนำหน้า</label>
+                    <select id="title" required>
+                        <option value="เด็กชาย">เด็กชาย</option>
+                        <option value="เด็กหญิง">เด็กหญิง</option>
+                        <option value="นาย">นาย</option>
+                        <option value="นางสาว">นางสาว</option>
+                    </select>
+                </div>
+                <div>
+                    <label>ชื่อ-นามสกุลนักเรียน</label>
+                    <input type="text" id="studentName" required>
+                </div>
+            </div>
         </div>
 
         <label>เวลาเรียนทั้งหมด (ชั่วโมง)</label>
@@ -90,9 +113,22 @@
     </form>
 </div>
 
+<div class="summary-container" id="summarySection">
+    <div class="section-title">รายการที่บันทึกแล้วในรอบนี้</div>
+    <table>
+        <thead>
+            <tr>
+                <th>ชื่อ-นามสกุล</th>
+                <th>ร้อยละ</th>
+                <th>สถานะ</th>
+            </tr>
+        </thead>
+        <tbody id="summaryBody"></tbody>
+    </table>
+</div>
+
 <script>
-    // *** สำคัญ: นำ URL ที่ได้จาก Apps Script มาใส่ตรงนี้ ***
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbxRJ13bWTXhbr2aWQ3auA86Hwc2xro1X-HKs4bbXQOsKta3R3RSJtcLblVDAK_n8Yq8/exec';
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbzjJ_QBp0CVQj2zGOl2CvmPnNcSfLeJl2OaAPwvtwdQKQnPHGd4kJXdc4NixLZVFQE5/exec';
 
     function calculate() {
         const total = parseFloat(document.getElementById('totalTime').value) || 0;
@@ -133,6 +169,7 @@
             courseName: document.getElementById('courseName').value,
             class: document.getElementById('classRoom').value,
             studentID: document.getElementById('studentID').value,
+            title: document.getElementById('title').value,
             studentName: document.getElementById('studentName').value,
             total: document.getElementById('totalTime').value,
             absent: document.getElementById('absent').value,
@@ -142,10 +179,18 @@
             percent: document.getElementById('percentText').innerText
         };
 
-        // ใช้ mode: 'no-cors' เพื่อเลี่ยงปัญหาการบล็อกจาก Browser บางรุ่น
         fetch(scriptURL, { method: 'POST', body: JSON.stringify(data), mode: 'no-cors' })
         .then(() => {
-            alert('บันทึกข้อมูลสำเร็จ!');
+            // แสดงตารางสรุป
+            document.getElementById('summarySection').style.display = 'block';
+            const tbody = document.getElementById('summaryBody');
+            const row = tbody.insertRow(0);
+            row.innerHTML = `
+                <td>${data.title}${data.studentName}</td>
+                <td>${data.percent}%</td>
+                <td style="color:green; font-weight:bold;">บันทึกแล้ว</td>
+            `;
+
             // ล้างเฉพาะส่วนข้อมูลนักเรียน
             document.getElementById('studentID').value = '';
             document.getElementById('studentName').value = '';
